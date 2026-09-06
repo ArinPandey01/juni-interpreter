@@ -1,6 +1,8 @@
 package lexer
 
 import (
+	"os"
+	"path/filepath"
 	"reflect"
 	"testing"
 
@@ -13,7 +15,12 @@ func TestTokenize(t *testing.T) {
 		source   string
 		expected []token.Token
 		wantErr  bool
+		eofLine  int
 	}{
+		{
+			name:   "empty source",
+			source: "",
+		},
 		{
 			name:   "single-character tokens",
 			source: "(){}[];,:.",
@@ -139,6 +146,14 @@ func TestTokenize(t *testing.T) {
 			},
 		},
 		{
+			name:    "multiline string",
+			source:  "\"hello\nworld\"",
+			eofLine: 2,
+			expected: []token.Token{
+				{Type: token.STRING, Lexeme: "\"hello\nworld\"", Literal: "hello\nworld", Line: 1},
+			},
+		},
+		{
 			name:   "variable declaration",
 			source: "var x = 123;",
 			expected: []token.Token{
@@ -150,8 +165,9 @@ func TestTokenize(t *testing.T) {
 			},
 		},
 		{
-			name:   "tokens across lines",
-			source: "var\nx\n=\n10;",
+			name:    "tokens across lines",
+			source:  "var\nx\n=\n10;",
+			eofLine: 4,
 			expected: []token.Token{
 				{Type: token.VAR, Lexeme: "var", Line: 1},
 				{Type: token.IDENTIFIER, Lexeme: "x", Line: 2},
@@ -163,6 +179,11 @@ func TestTokenize(t *testing.T) {
 		{
 			name:    "unterminated string",
 			source:  `"unterminated`,
+			wantErr: true,
+		},
+		{
+			name:    "unexpected character",
+			source:  "$",
 			wantErr: true,
 		},
 	}
@@ -181,9 +202,49 @@ func TestTokenize(t *testing.T) {
 				t.Fatalf("tokenize() returned an unexpected error: %v", err)
 			}
 
-			if !reflect.DeepEqual(actual, testCase.expected) {
-				t.Errorf("tokenize() = %#v, want %#v", actual, testCase.expected)
+			eofLine := testCase.eofLine
+			if eofLine == 0 {
+				eofLine = 1
+			}
+			expected := append([]token.Token(nil), testCase.expected...)
+			expected = append(expected, token.Token{Type: token.EOF, Line: eofLine})
+
+			if !reflect.DeepEqual(actual, expected) {
+				t.Errorf("tokenize() = %#v, want %#v", actual, expected)
 			}
 		})
 	}
+}
+
+func TestLexer(t *testing.T) {
+	t.Run("reads and tokenizes a source file", func(t *testing.T) {
+		path := filepath.Join(t.TempDir(), "program.juni")
+		if err := os.WriteFile(path, []byte("var answer = 42;"), 0o600); err != nil {
+			t.Fatalf("write temporary source file: %v", err)
+		}
+
+		actual, err := Lexer(path)
+		if err != nil {
+			t.Fatalf("Lexer() returned an unexpected error: %v", err)
+		}
+
+		expected := []token.Token{
+			{Type: token.VAR, Lexeme: "var", Line: 1},
+			{Type: token.IDENTIFIER, Lexeme: "answer", Line: 1},
+			{Type: token.EQUAL, Lexeme: "=", Line: 1},
+			{Type: token.NUMBER, Lexeme: "42", Line: 1},
+			{Type: token.SEMICOLON, Lexeme: ";", Line: 1},
+			{Type: token.EOF, Line: 1},
+		}
+		if !reflect.DeepEqual(actual, expected) {
+			t.Errorf("Lexer() = %#v, want %#v", actual, expected)
+		}
+	})
+
+	t.Run("returns an error for a missing source file", func(t *testing.T) {
+		path := filepath.Join(t.TempDir(), "missing.juni")
+		if _, err := Lexer(path); err == nil {
+			t.Fatal("Lexer() returned no error for a missing source file")
+		}
+	})
 }

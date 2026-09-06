@@ -6,11 +6,11 @@ import (
 	"juni-interpreter/token"
 )
 
-func peek(idx int, code string) (byte, error) {
+func peek(idx int, code string) byte {
 	if idx+1 >= len(code) {
-		return 0, fmt.Errorf("peek out of bounds")
+		return 0
 	}
-	return code[idx+1], nil
+	return code[idx+1]
 }
 
 func advance(idx *int, code *string) error {
