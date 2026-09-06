@@ -17,10 +17,15 @@ const (
 
 	// Mathematical operators
 	PLUS
+	PLUS_EQUAL
 	MINUS
+	MINUS_EQUAL
 	STAR
+	STAR_EQUAL
 	SLASH
+	SLASH_EQUAL
 	MODULO
+	MODULO_EQUAL
 
 	// Comparison / logical operators
 	EQUAL
