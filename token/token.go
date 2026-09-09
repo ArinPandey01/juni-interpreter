@@ -39,14 +39,14 @@ const (
 
 	// Literals
 	IDENTIFIER
-	NUMBER
+	INTEGER
+	FLOAT
 	STRING
 
 	// Keywords
 	IF
 	ELSE
 	FOR
-	WHILE
 	FUNCTION
 	RETURN
 	VAR

@@ -77,14 +77,45 @@ func TestTokenize(t *testing.T) {
 			name:   "integer number",
 			source: "123",
 			expected: []token.Token{
-				{Type: token.NUMBER, Lexeme: "123", Line: 1},
+				{Type: token.INTEGER, Lexeme: "123", Literal: int64(123), Line: 1},
 			},
 		},
 		{
 			name:   "zero",
 			source: "0",
 			expected: []token.Token{
-				{Type: token.NUMBER, Lexeme: "0", Line: 1},
+				{Type: token.INTEGER, Lexeme: "0", Literal: int64(0), Line: 1},
+			},
+		},
+		{
+			name:   "float number",
+			source: "3.14",
+			expected: []token.Token{
+				{Type: token.FLOAT, Lexeme: "3.14", Literal: 3.14, Line: 1},
+			},
+		},
+		{
+			name:   "whole-valued float",
+			source: "10.0",
+			expected: []token.Token{
+				{Type: token.FLOAT, Lexeme: "10.0", Literal: 10.0, Line: 1},
+			},
+		},
+		{
+			name:   "negative number uses unary minus token",
+			source: "-17",
+			expected: []token.Token{
+				{Type: token.MINUS, Lexeme: "-", Line: 1},
+				{Type: token.INTEGER, Lexeme: "17", Literal: int64(17), Line: 1},
+			},
+		},
+		{
+			name:   "dot without a following digit is not part of a number",
+			source: "1.foo",
+			expected: []token.Token{
+				{Type: token.INTEGER, Lexeme: "1", Literal: int64(1), Line: 1},
+				{Type: token.DOT, Lexeme: ".", Line: 1},
+				{Type: token.IDENTIFIER, Lexeme: "foo", Line: 1},
 			},
 		},
 		{
@@ -119,8 +150,8 @@ func TestTokenize(t *testing.T) {
 				{Type: token.FUNCTION, Lexeme: "function", Line: 1},
 				{Type: token.RETURN, Lexeme: "return", Line: 1},
 				{Type: token.VAR, Lexeme: "var", Line: 1},
-				{Type: token.TRUE, Lexeme: "true", Line: 1},
-				{Type: token.FALSE, Lexeme: "false", Line: 1},
+				{Type: token.TRUE, Lexeme: "true", Literal: true, Line: 1},
+				{Type: token.FALSE, Lexeme: "false", Literal: false, Line: 1},
 				{Type: token.NULL, Lexeme: "null", Line: 1},
 			},
 		},
@@ -160,7 +191,7 @@ func TestTokenize(t *testing.T) {
 				{Type: token.VAR, Lexeme: "var", Line: 1},
 				{Type: token.IDENTIFIER, Lexeme: "x", Line: 1},
 				{Type: token.EQUAL, Lexeme: "=", Line: 1},
-				{Type: token.NUMBER, Lexeme: "123", Line: 1},
+				{Type: token.INTEGER, Lexeme: "123", Literal: int64(123), Line: 1},
 				{Type: token.SEMICOLON, Lexeme: ";", Line: 1},
 			},
 		},
@@ -172,7 +203,7 @@ func TestTokenize(t *testing.T) {
 				{Type: token.VAR, Lexeme: "var", Line: 1},
 				{Type: token.IDENTIFIER, Lexeme: "x", Line: 2},
 				{Type: token.EQUAL, Lexeme: "=", Line: 3},
-				{Type: token.NUMBER, Lexeme: "10", Line: 4},
+				{Type: token.INTEGER, Lexeme: "10", Literal: int64(10), Line: 4},
 				{Type: token.SEMICOLON, Lexeme: ";", Line: 4},
 			},
 		},
@@ -232,7 +263,7 @@ func TestLexer(t *testing.T) {
 			{Type: token.VAR, Lexeme: "var", Line: 1},
 			{Type: token.IDENTIFIER, Lexeme: "answer", Line: 1},
 			{Type: token.EQUAL, Lexeme: "=", Line: 1},
-			{Type: token.NUMBER, Lexeme: "42", Line: 1},
+			{Type: token.INTEGER, Lexeme: "42", Literal: int64(42), Line: 1},
 			{Type: token.SEMICOLON, Lexeme: ";", Line: 1},
 			{Type: token.EOF, Line: 1},
 		}

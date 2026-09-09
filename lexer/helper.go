@@ -41,10 +41,19 @@ func addToken(lexeme string, tokenType token.TokenType, atLine int, tokens *[]to
 	}
 
 	var literal any
-	if tokenType == token.STRING {
+	switch tokenType {
+	case token.STRING:
 		literal = lexeme[1 : len(lexeme)-1]
+	case token.TRUE:
+		literal = true
+	case token.FALSE:
+		literal = false
 	}
 
+	addLiteralToken(lexeme, tokenType, literal, atLine, tokens)
+}
+
+func addLiteralToken(lexeme string, tokenType token.TokenType, literal any, atLine int, tokens *[]token.Token) {
 	t := token.Token{
 		Type:    tokenType,
 		Lexeme:  lexeme,
