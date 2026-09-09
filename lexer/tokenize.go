@@ -2,6 +2,8 @@ package lexer
 
 import (
 	"fmt"
+	"strconv"
+
 	"juni-interpreter/token"
 )
 
@@ -159,7 +161,30 @@ func tokenize(source []byte) ([]token.Token, error) {
 				for current < len(code) && (code[current] >= '0' && code[current] <= '9') {
 					advance(&current, &code)
 				}
-				addToken(code[start:current], token.NUMBER, atLine, &tokens)
+
+				tokenType := token.INTEGER
+				if current+1 < len(code) && code[current] == '.' && code[current+1] >= '0' && code[current+1] <= '9' {
+					tokenType = token.FLOAT
+					advance(&current, &code)
+					for current < len(code) && code[current] >= '0' && code[current] <= '9' {
+						advance(&current, &code)
+					}
+				}
+
+				lexeme := code[start:current]
+				if tokenType == token.INTEGER {
+					literal, err := strconv.ParseInt(lexeme, 10, 64)
+					if err != nil {
+						return nil, fmt.Errorf("line %d: invalid integer literal %q: %w", atLine, lexeme, err)
+					}
+					addLiteralToken(lexeme, tokenType, literal, atLine, &tokens)
+				} else {
+					literal, err := strconv.ParseFloat(lexeme, 64)
+					if err != nil {
+						return nil, fmt.Errorf("line %d: invalid float literal %q: %w", atLine, lexeme, err)
+					}
+					addLiteralToken(lexeme, tokenType, literal, atLine, &tokens)
+				}
 			} else if (code[current] >= 'a' && code[current] <= 'z') || (code[current] >= 'A' && code[current] <= 'Z') || code[current] == '_' {
 				for current < len(code) && ((code[current] >= 'a' && code[current] <= 'z') || (code[current] >= 'A' && code[current] <= 'Z') || (code[current] >= '0' && code[current] <= '9') || code[current] == '_') {
 					advance(&current, &code)
